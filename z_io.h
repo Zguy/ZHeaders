@@ -5,6 +5,9 @@ USAGE
 	#define Z_IO_IMPLEMENTATION
 	before you include this file in *one* C or C++ file to create the implementation.
 
+	#define Z_IO_STATIC
+	before you include this file to create a private implementation.
+
 EXAMPLE
 	// Allocated on stack
 	ZIOHandle handle;
@@ -43,7 +46,6 @@ UNLICENSE
 
 	For more information, please refer to <http://unlicense.org>
 */
-
 #ifndef ZIO_INCLUDED_IO_H
 #define ZIO_INCLUDED_IO_H
 
