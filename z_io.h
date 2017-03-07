@@ -73,6 +73,12 @@ typedef enum
 	ZIO_SEEK_END  // Seek relative to the end of the data
 } ZIOSeek;
 
+enum
+{
+	ZIO_ERROR = -1,
+	ZIO_OK    = 0
+};
+
 struct ZIOHandle;
 typedef struct ZIOHandle ZIOHandle;
 
@@ -83,6 +89,8 @@ struct ZIOHandle
 	zio_ll (*seek)(ZIOHandle *handle, zio_ll offset, ZIOSeek whence);
 	zio_ll (*read)(ZIOHandle *handle, void *destination, zio_ll size);
 	zio_ll (*write)(ZIOHandle *handle, const void *source, zio_ll size);
+
+	const char *last_error;
 
 	union
 	{
@@ -106,18 +114,22 @@ ZIODEF zio_error zio_open_const_memory(ZIOHandle *handle, const void *memory, zi
 
 static inline zio_error zio_close(ZIOHandle *handle) { return handle->close(handle); }
 
+// Returns size of data, or ZIO_ERROR
 static inline zio_ll zio_size(ZIOHandle *handle) { return handle->size(handle); }
 
-// Returns position in data after seek, or -1 on error
+// Returns position in data after seek, or ZIO_ERROR
 static inline zio_ll zio_seek(ZIOHandle *handle, zio_ll offset, ZIOSeek whence) { return handle->seek(handle, offset, whence); }
 
+// Returns position in data, or ZIO_ERROR
 static inline zio_ll zio_tell(ZIOHandle *handle) { return handle->seek(handle, 0, ZIO_SEEK_CUR); }
 
-// Returns bytes read, or 0 on error
+// Returns bytes read, or ZIO_ERROR
 static inline zio_ll zio_read(ZIOHandle *handle, void *destination, zio_ll size) { return handle->read(handle, destination, size); }
 
-// Return bytes written, or 0 on error
+// Return bytes written, or ZIO_ERROR
 static inline zio_ll zio_write(ZIOHandle *handle, const void *source, zio_ll size) { return handle->write(handle, source, size); }
+
+static inline const char *zio_last_error(ZIOHandle *handle) { return handle->last_error; }
 
 #ifdef __cplusplus
 }
@@ -127,6 +139,7 @@ static inline zio_ll zio_write(ZIOHandle *handle, const void *source, zio_ll siz
 
 #ifdef Z_IO_IMPLEMENTATION
 
+#include <errno.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -140,19 +153,25 @@ static inline int zio__test_flag(int flags, int test)
 	return ((flags & test) == test);
 }
 
+static inline zio_error zio__set_error(ZIOHandle *handle, const char *error_string)
+{
+	handle->last_error = error_string;
+	return ZIO_ERROR;
+}
+
 // File I/O
 static zio_error zio__file_close(ZIOHandle *handle)
 {
 	if (fclose(handle->data.file.handle) != 0)
-		return -1;
+		return zio__set_error(handle, strerror(errno));
 	zio__zero_handle(handle);
-	return 0;
+	return ZIO_OK;
 }
 static zio_ll zio__file_size(ZIOHandle *handle)
 {
 	zio_ll pos = zio_tell(handle);
-	if (pos < 0)
-		return -1;
+	if (pos == ZIO_ERROR)
+		return ZIO_ERROR;
 	zio_ll size = zio_seek(handle, 0, ZIO_SEEK_END);
 	zio_seek(handle, pos, ZIO_SEEK_SET);
 	return size;
@@ -160,21 +179,21 @@ static zio_ll zio__file_size(ZIOHandle *handle)
 static zio_ll zio__file_seek(ZIOHandle *handle, zio_ll offset, ZIOSeek whence)
 {
 	if (fseek(handle->data.file.handle, offset, whence) != 0)
-		return -1;
+		return zio__set_error(handle, strerror(errno));
 	return ftell(handle->data.file.handle);
 }
 static zio_ll zio__file_read(ZIOHandle *handle, void *destination, zio_ll size)
 {
 	zio_ll read_count = fread(destination, size, 1, handle->data.file.handle);
 	if (read_count == 0 && ferror(handle->data.file.handle))
-		return 0;
+		return zio__set_error(handle, strerror(errno));
 	return read_count * size;
 }
 static zio_ll zio__file_write(ZIOHandle *handle, const void *source, zio_ll size)
 {
 	zio_ll write_count = fwrite(source, size, 1, handle->data.file.handle);
 	if (write_count == 0 && ferror(handle->data.file.handle))
-		return 0;
+		return zio__set_error(handle, strerror(errno));;
 	return write_count * size;
 }
 
@@ -182,7 +201,7 @@ static zio_ll zio__file_write(ZIOHandle *handle, const void *source, zio_ll size
 static zio_error zio__memory_close(ZIOHandle *handle)
 {
 	zio__zero_handle(handle);
-	return 0;
+	return ZIO_OK;
 }
 static zio_ll zio__memory_size(ZIOHandle *handle)
 {
@@ -204,7 +223,7 @@ static zio_ll zio__memory_seek(ZIOHandle *handle, zio_ll offset, ZIOSeek whence)
 		new_pos = handle->data.mem.end + offset;
 		break;
 	default:
-		return -1;
+		return zio__set_error(handle, "Invalid whence value");
 	}
 
 	if (new_pos < handle->data.mem.begin)
@@ -219,7 +238,7 @@ static zio_ll zio__memory_seek(ZIOHandle *handle, zio_ll offset, ZIOSeek whence)
 static zio_ll zio__memory_read(ZIOHandle *handle, void *destination, zio_ll size)
 {
 	if (size <= 0)
-		return 0;
+		return zio__set_error(handle, "Invalid size");
 
 	zio_ll mem_available = (handle->data.mem.end - handle->data.mem.pos);
 	zio_ll total_bytes = size;
@@ -233,7 +252,7 @@ static zio_ll zio__memory_read(ZIOHandle *handle, void *destination, zio_ll size
 static zio_ll zio__memory_write(ZIOHandle *handle, const void *source, zio_ll size)
 {
 	if (size <= 0)
-		return 0;
+		return zio__set_error(handle, "Invalid size");
 
 	zio_ll mem_available = (handle->data.mem.end - handle->data.mem.pos);
 	zio_ll total_bytes = size;
@@ -246,7 +265,7 @@ static zio_ll zio__memory_write(ZIOHandle *handle, const void *source, zio_ll si
 }
 static zio_ll zio__const_memory_write(ZIOHandle *handle, const void *source, zio_ll size)
 {
-	return 0;
+	return zio__set_error(handle, "Cannot write to const memory");
 }
 
 ZIODEF zio_error zio_open_file(ZIOHandle *handle, const char *filename, ZIOMode mode)
@@ -266,11 +285,12 @@ ZIODEF zio_error zio_open_file(ZIOHandle *handle, const char *filename, ZIOMode 
 		mode_flags[i] = '\0';
 	}
 
+	zio__zero_handle(handle);
+
 	FILE *file = fopen(filename, mode_flags);
 	if (!file)
-		return -1;
+		return zio__set_error(handle, strerror(errno));
 
-	zio__zero_handle(handle);
 	handle->data.file.handle = file;
 
 	handle->close = zio__file_close;
@@ -278,15 +298,16 @@ ZIODEF zio_error zio_open_file(ZIOHandle *handle, const char *filename, ZIOMode 
 	handle->seek  = zio__file_seek;
 	handle->read  = zio__file_read;
 	handle->write = zio__file_write;
-	return 0;
+	return ZIO_OK;
 }
 
 ZIODEF zio_error zio_open_memory(ZIOHandle *handle, void *memory, zio_ll size)
 {
-	if (!memory || size < 0)
-		return -1;
-
 	zio__zero_handle(handle);
+
+	if (!memory || size < 0)
+		return zio__set_error(handle, "Invalid memory or size");
+
 	handle->data.mem.begin = (char*)memory;
 	handle->data.mem.pos = handle->data.mem.begin;
 	handle->data.mem.end = handle->data.mem.begin + size;
@@ -296,15 +317,16 @@ ZIODEF zio_error zio_open_memory(ZIOHandle *handle, void *memory, zio_ll size)
 	handle->seek  = zio__memory_seek;
 	handle->read  = zio__memory_read;
 	handle->write = zio__memory_write;
-	return 0;
+	return ZIO_OK;
 }
 
 ZIODEF zio_error zio_open_const_memory(ZIOHandle *handle, const void *memory, zio_ll size)
 {
-	if (!memory || size < 0)
-		return -1;
-
 	zio__zero_handle(handle);
+
+	if (!memory || size < 0)
+		return zio__set_error(handle, "Invalid memory or size");
+
 	handle->data.mem.begin = (char*)memory;
 	handle->data.mem.pos = handle->data.mem.begin;
 	handle->data.mem.end = handle->data.mem.begin + size;
@@ -314,7 +336,7 @@ ZIODEF zio_error zio_open_const_memory(ZIOHandle *handle, const void *memory, zi
 	handle->seek  = zio__memory_seek;
 	handle->read  = zio__memory_read;
 	handle->write = zio__const_memory_write;
-	return 0;
+	return ZIO_OK;
 }
 
 #endif // Z_IO_IMPLEMENTATION
