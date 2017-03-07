@@ -81,8 +81,8 @@ struct ZIOHandle
 	zio_error (*close)(ZIOHandle *handle);
 	zio_ll (*size)(ZIOHandle *handle);
 	zio_ll (*seek)(ZIOHandle *handle, zio_ll offset, ZIOSeek whence);
-	zio_ll (*read)(ZIOHandle *handle, void *destination, zio_ll size, zio_ll count);
-	zio_ll (*write)(ZIOHandle *handle, const void *source, zio_ll size, zio_ll count);
+	zio_ll (*read)(ZIOHandle *handle, void *destination, zio_ll size);
+	zio_ll (*write)(ZIOHandle *handle, const void *source, zio_ll size);
 
 	union
 	{
@@ -113,10 +113,11 @@ static inline zio_ll zio_seek(ZIOHandle *handle, zio_ll offset, ZIOSeek whence) 
 
 static inline zio_ll zio_tell(ZIOHandle *handle) { return handle->seek(handle, 0, ZIO_SEEK_CUR); }
 
-// Returns number of objects read, or 0 on error
-static inline zio_ll zio_read(ZIOHandle *handle, void *destination, zio_ll size, zio_ll count) { return handle->read(handle, destination, size, count); }
+// Returns bytes read, or 0 on error
+static inline zio_ll zio_read(ZIOHandle *handle, void *destination, zio_ll size) { return handle->read(handle, destination, size); }
 
-static inline zio_ll zio_write(ZIOHandle *handle, const void *source, zio_ll size, zio_ll count) { return handle->write(handle, source, size, count); }
+// Return bytes written, or 0 on error
+static inline zio_ll zio_write(ZIOHandle *handle, const void *source, zio_ll size) { return handle->write(handle, source, size); }
 
 #ifdef __cplusplus
 }
@@ -162,19 +163,19 @@ static zio_ll zio__file_seek(ZIOHandle *handle, zio_ll offset, ZIOSeek whence)
 		return -1;
 	return ftell(handle->data.file.handle);
 }
-static zio_ll zio__file_read(ZIOHandle *handle, void *destination, zio_ll size, zio_ll count)
+static zio_ll zio__file_read(ZIOHandle *handle, void *destination, zio_ll size)
 {
-	zio_ll read_count = fread(destination, size, count, handle->data.file.handle);
+	zio_ll read_count = fread(destination, size, 1, handle->data.file.handle);
 	if (read_count == 0 && ferror(handle->data.file.handle))
 		return 0;
-	return read_count;
+	return read_count * size;
 }
-static zio_ll zio__file_write(ZIOHandle *handle, const void *source, zio_ll size, zio_ll count)
+static zio_ll zio__file_write(ZIOHandle *handle, const void *source, zio_ll size)
 {
-	zio_ll write_count = fwrite(source, size, count, handle->data.file.handle);
+	zio_ll write_count = fwrite(source, size, 1, handle->data.file.handle);
 	if (write_count == 0 && ferror(handle->data.file.handle))
 		return 0;
-	return write_count;
+	return write_count * size;
 }
 
 // Memory I/O
@@ -215,37 +216,35 @@ static zio_ll zio__memory_seek(ZIOHandle *handle, zio_ll offset, ZIOSeek whence)
 	zio_ll pos = (handle->data.mem.pos - handle->data.mem.begin);
 	return pos;
 }
-static zio_ll zio__memory_read(ZIOHandle *handle, void *destination, zio_ll size, zio_ll count)
+static zio_ll zio__memory_read(ZIOHandle *handle, void *destination, zio_ll size)
 {
-	if (size <= 0 || count <= 0)
+	if (size <= 0)
 		return 0;
 
-	zio_ll total_bytes = (size * count);
 	zio_ll mem_available = (handle->data.mem.end - handle->data.mem.pos);
+	zio_ll total_bytes = size;
 	if (total_bytes > mem_available)
 		total_bytes = mem_available;
 
 	memcpy(destination, handle->data.mem.pos, total_bytes);
 	handle->data.mem.pos += total_bytes;
-
-	return (total_bytes / size);
+	return total_bytes;
 }
-static zio_ll zio__memory_write(ZIOHandle *handle, const void *source, zio_ll size, zio_ll count)
+static zio_ll zio__memory_write(ZIOHandle *handle, const void *source, zio_ll size)
 {
-	if (size <= 0 || count <= 0)
+	if (size <= 0)
 		return 0;
 
-	zio_ll total_bytes = (size * count);
 	zio_ll mem_available = (handle->data.mem.end - handle->data.mem.pos);
+	zio_ll total_bytes = size;
 	if (total_bytes > mem_available)
 		total_bytes = mem_available;
 
 	memcpy(handle->data.mem.pos, source, total_bytes);
 	handle->data.mem.pos += total_bytes;
-
-	return (total_bytes / size);
+	return total_bytes;
 }
-static zio_ll zio__const_memory_write(ZIOHandle *handle, const void *source, zio_ll size, zio_ll count)
+static zio_ll zio__const_memory_write(ZIOHandle *handle, const void *source, zio_ll size)
 {
 	return 0;
 }

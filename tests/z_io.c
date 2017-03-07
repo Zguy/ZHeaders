@@ -8,18 +8,20 @@ const char TEST_TEXT[] = "This is a test\n";
 
 void write_test(ZIOHandle *handle)
 {
-	assert(zio_write(handle, TEST_TEXT, sizeof(TEST_TEXT) - 1, 1) == 1);
+	zio_ll size = sizeof(TEST_TEXT) - 1;
+	assert(zio_write(handle, TEST_TEXT, size) == size);
 }
 
 void write_test_should_fail(ZIOHandle *handle)
 {
-	assert(zio_write(handle, TEST_TEXT, sizeof(TEST_TEXT) - 1, 1) == 0);
+	assert(zio_write(handle, TEST_TEXT, sizeof(TEST_TEXT) - 1) == 0);
 }
 
 void read_test(ZIOHandle *handle)
 {
 	char read_text[sizeof(TEST_TEXT)];
-	assert(zio_read(handle, read_text, sizeof(read_text) - 1, 1) == 1);
+	zio_ll size = sizeof(read_text) - 1;
+	assert(zio_read(handle, read_text, size) == size);
 	read_text[sizeof(read_text) - 1] = '\0';
 
 	assert(strcmp(TEST_TEXT, read_text) == 0);
@@ -29,7 +31,7 @@ void read_test_should_fail(ZIOHandle *handle)
 {
 	char read_text[sizeof(TEST_TEXT)];
 	memset(read_text, 0, sizeof(read_text));
-	assert(zio_read(handle, read_text, sizeof(read_text) - 1, 1) == 0);
+	assert(zio_read(handle, read_text, sizeof(read_text) - 1) == 0);
 	read_text[sizeof(read_text) - 1] = '\0';
 
 	assert(strcmp(TEST_TEXT, read_text) != 0);
