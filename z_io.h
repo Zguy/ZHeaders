@@ -72,16 +72,15 @@ typedef enum
 {
 	ZIO_SEEK_SET, // Seek from the beginning of the data
 	ZIO_SEEK_CUR, // Seek from the current position
-	ZIO_SEEK_END  // Seek relative to the end of the data
+	ZIO_SEEK_END, // Seek relative to the end of the data
 } ZIOSeek;
 
 enum
 {
 	ZIO_ERROR = -1,
-	ZIO_OK    = 0
+	ZIO_OK    = 0,
 };
 
-struct ZIOHandle;
 typedef struct ZIOHandle ZIOHandle;
 
 struct ZIOHandle
