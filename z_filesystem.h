@@ -98,7 +98,7 @@ extern "C" {
 
 	// Path functions
 #ifndef Z_FS_NO_PATH
-	// Joins two paths
+	// Joins two paths.
 	ZFSDEF void zfs_path_join(char *result, zfs_ll result_size, const char *left, const char *right);
 
 	// Returns the extension of a file including the period (".txt").
@@ -113,7 +113,10 @@ extern "C" {
 	// Returns the directory part of a path including a trailing /, given "/path/to/file.txt" it returns "/path/to/".
 	ZFSDEF void zfs_path_directory(char *result, zfs_ll result_size, const char *path);
 
-	// Normalizes all directory separators to the native separator. \ on Windows, / on Linux.
+	// Replaces all directory separators with the native separator. \ on Windows, / on Linux.
+	ZFSDEF void zfs_path_normalize_inplace(char *path);
+
+	// Same as above, but on a copy of the string.
 	ZFSDEF void zfs_path_normalize(char *result, zfs_ll result_size, const char *path);
 
 	// Sets 'result' buffer to the current working directory.
@@ -318,6 +321,16 @@ ZFSPATHDEF void zfs_path_directory(char *result, zfs_ll result_size, const char 
 	result[len] = '\0';
 }
 
+ZFSPATHDEF void zfs_path_normalize_inplace(char *path)
+{
+	while (*path)
+	{
+		if (zfs__is_dir_sep(*path))
+			(*path) = ZFS__DIR_SEP;
+		++path;
+	}
+}
+
 ZFSPATHDEF void zfs_path_normalize(char *result, zfs_ll result_size, const char *path)
 {
 	zfs_ll len = strlen(path);
@@ -326,12 +339,7 @@ ZFSPATHDEF void zfs_path_normalize(char *result, zfs_ll result_size, const char 
 	memcpy(result, path, len);
 	result[len] = '\0';
 
-	while (*result)
-	{
-		if (zfs__is_dir_sep(*result))
-			(*result) = ZFS__DIR_SEP;
-		++result;
-	}
+	zfs_path_normalize_inplace(result);
 }
 
 ZFSPATHDEF ZFSBool zfs_path_working_directory(char *result, zfs_ll result_size)

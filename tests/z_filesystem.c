@@ -75,6 +75,10 @@ int main()
 	zfs_path_normalize(buffer, sizeof(buffer), "/mixed\\separators/here\\");
 	assert_normalized_strcmp(buffer, "/mixed/separators/here/");
 
+	strcpy(buffer, "/mixed\\separators/here\\");
+	zfs_path_normalize_inplace(buffer);
+	assert_normalized_strcmp(buffer, "/mixed/separators/here/");
+
 	assert(zfs_path_working_directory(buffer, sizeof(buffer)) == ZFS_TRUE);
 	zfs_path_full(buffer, sizeof(buffer), "file.txt");
 	zfs_path_full(buffer, sizeof(buffer), "/usr/bin/file.txt");
