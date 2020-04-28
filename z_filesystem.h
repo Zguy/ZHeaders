@@ -232,14 +232,14 @@ static inline zfs_bool zfs__is_dir_sep(const char c)
 	return (c == '/' || c == '\\');
 }
 
-static zfs_ll zfs__find_last_dir_sep(const char *path, zfs_ll len)
+static inline zfs_ll zfs__find_last_dir_sep(const char *path, zfs_ll len)
 {
 	zfs_ll index = len;
 	while (index-- > 0 && !zfs__is_dir_sep(path[index]));
 	return index;
 }
 
-static zfs_ll zfs__find_last_char(const char *path, zfs_ll len, char c)
+static inline zfs_ll zfs__find_last_char(const char *path, zfs_ll len, char c)
 {
 	zfs_ll index = len;
 	while (index-- > 0 && path[index] != c);
