@@ -24,7 +24,7 @@ static void assert_normalized_strcmp(const char *str1, const char *str2)
 }
 #endif
 
-int main()
+int main(void)
 {
 	char buffer[50];
 

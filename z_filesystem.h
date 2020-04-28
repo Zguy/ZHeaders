@@ -80,9 +80,9 @@ extern "C" {
 #define ZFSDEF extern
 #endif
 
-#if __linux
+#if defined(__linux)
 #define ZFS_POSIX
-#elif _WIN32
+#elif defined(_WIN32)
 #define ZFS_WINDOWS
 #else
 #error Unsupported platform
@@ -205,8 +205,10 @@ extern "C" {
 #define _CRT_SECURE_NO_WARNINGS
 #endif
 #define WIN32_LEAN_AND_MEAN
+#define NOMINMAX
 #include <Windows.h> // For everything
 #undef WIN32_LEAN_AND_MEAN
+#undef NOMINMAX
 #endif
 
 #if !defined(Z_FS_NO_PATH) || !defined(Z_FS_NO_DIRECTORY)
@@ -566,5 +568,6 @@ ZFSDEF zfs_bool zfs_directory_is_directory(ZFSDir *context)
 
 #endif // Z_FS_IMPLEMENTATION
 
+#undef _CRT_SECURE_NO_WARNINGS
 #undef ZFS_POSIX
 #undef ZFS_WINDOWS
