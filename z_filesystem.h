@@ -89,12 +89,13 @@ extern "C" {
 #endif
 
 	typedef long long zfs_ll;
+	typedef int zfs_bool;
 
-	typedef enum
+	enum
 	{
 		ZFS_FALSE,
 		ZFS_TRUE,
-	} ZFSBool;
+	};
 
 	// Path functions
 #ifndef Z_FS_NO_PATH
@@ -121,7 +122,7 @@ extern "C" {
 
 	// Sets 'result' buffer to the current working directory.
 	// Returns false if the current working directory could not be found.
-	ZFSDEF ZFSBool zfs_path_working_directory(char *result, zfs_ll result_size);
+	ZFSDEF zfs_bool zfs_path_working_directory(char *result, zfs_ll result_size);
 
 	// If 'path' is a full path, it returns 'path', otherwise it joins 'path' with the working directory.
 	ZFSDEF void zfs_path_full(char *result, zfs_ll result_size, const char *path);
@@ -131,23 +132,23 @@ extern "C" {
 #ifndef Z_FS_NO_FILE
 	// If 'filename' exists, the access and modified times are updated, otherwise the file is created.
 	// Returns false if it failed.
-	ZFSDEF ZFSBool zfs_file_touch(const char *filename);
+	ZFSDEF zfs_bool zfs_file_touch(const char *filename);
 
 	// Returns whether 'filename' exists or not.
-	ZFSDEF ZFSBool zfs_file_exists(const char *filename);
+	ZFSDEF zfs_bool zfs_file_exists(const char *filename);
 
 	// Renames 'old_filename' to 'new_filename'.
 	// Returns false if it failed.
-	ZFSDEF ZFSBool zfs_file_rename(const char *old_filename, const char *new_filename);
+	ZFSDEF zfs_bool zfs_file_rename(const char *old_filename, const char *new_filename);
 
 	// Copies 'source_filename' to 'destination_filename'.
 	// Copies in 32k byte chunks to conserve memory.
 	// Returns false if it failed.
-	ZFSDEF ZFSBool zfs_file_copy(const char *source_filename, const char *destination_filename);
+	ZFSDEF zfs_bool zfs_file_copy(const char *source_filename, const char *destination_filename);
 
 	// Deletes 'filename'.
 	// Returns false if it failed.
-	ZFSDEF ZFSBool zfs_file_delete(const char *filename);
+	ZFSDEF zfs_bool zfs_file_delete(const char *filename);
 #endif // Z_FS_NO_FILE
 
 	// Directory traversal
@@ -166,11 +167,11 @@ extern "C" {
 	// 'path' can contain a trailing / or not, but should not include "/*".
 	// 'context' can be either malloc'ed or simply created on the stack
 	// Returns false if it failed.
-	ZFSDEF ZFSBool zfs_directory_begin(ZFSDir *context, const char *path);
+	ZFSDEF zfs_bool zfs_directory_begin(ZFSDir *context, const char *path);
 
 	// Steps the directory traversal forward.
 	// Returns false if we've reached the end.
-	ZFSDEF ZFSBool zfs_directory_next(ZFSDir *context);
+	ZFSDEF zfs_bool zfs_directory_next(ZFSDir *context);
 
 	// Cleans up the context.
 	// Does not need to be called if zfs_directory_begin() returned false.
@@ -180,7 +181,7 @@ extern "C" {
 	ZFSDEF void zfs_directory_current_filename(ZFSDir *context, char *result, zfs_ll result_size);
 
 	// Returns whether the context currently points at a directory.
-	ZFSDEF ZFSBool zfs_directory_is_directory(ZFSDir *context);
+	ZFSDEF zfs_bool zfs_directory_is_directory(ZFSDir *context);
 #endif // Z_FS_NO_DIRECTORY
 
 #ifdef __cplusplus
@@ -224,7 +225,7 @@ static const char ZFS__DIR_SEP = '/';
 static const char ZFS__DIR_SEP = '\\';
 #endif
 
-static inline ZFSBool zfs__is_dir_sep(const char c)
+static inline zfs_bool zfs__is_dir_sep(const char c)
 {
 	return (c == '/' || c == '\\');
 }
@@ -342,7 +343,7 @@ ZFSPATHDEF void zfs_path_normalize(char *result, zfs_ll result_size, const char 
 	zfs_path_normalize_inplace(result);
 }
 
-ZFSPATHDEF ZFSBool zfs_path_working_directory(char *result, zfs_ll result_size)
+ZFSPATHDEF zfs_bool zfs_path_working_directory(char *result, zfs_ll result_size)
 {
 #if defined(ZFS_POSIX)
 	return (getcwd(result, result_size) != NULL);
@@ -369,7 +370,7 @@ ZFSPATHDEF void zfs_path_full(char *result, zfs_ll result_size, const char *path
 #endif // Z_FS_NO_PATH
 
 #ifndef Z_FS_NO_FILE
-ZFSDEF ZFSBool zfs_file_touch(const char *filename)
+ZFSDEF zfs_bool zfs_file_touch(const char *filename)
 {
 	if (zfs_file_exists(filename))
 	{
@@ -385,7 +386,7 @@ ZFSDEF ZFSBool zfs_file_touch(const char *filename)
 		HANDLE handle = CreateFileA(filename, FILE_WRITE_ATTRIBUTES, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 		if (handle == INVALID_HANDLE_VALUE)
 			return ZFS_FALSE;
-		ZFSBool result = (SetFileTime(handle, NULL, &ft, &ft) != 0);
+		zfs_bool result = (SetFileTime(handle, NULL, &ft, &ft) != 0);
 		CloseHandle(handle);
 		return result;
 #endif
@@ -400,7 +401,7 @@ ZFSDEF ZFSBool zfs_file_touch(const char *filename)
 	}
 }
 
-ZFSDEF ZFSBool zfs_file_exists(const char *filename)
+ZFSDEF zfs_bool zfs_file_exists(const char *filename)
 {
 #if defined(ZFS_POSIX)
 	return (access(filename, F_OK) == 0);
@@ -413,12 +414,12 @@ ZFSDEF ZFSBool zfs_file_exists(const char *filename)
 #endif
 }
 
-ZFSDEF ZFSBool zfs_file_rename(const char *old_filename, const char *new_filename)
+ZFSDEF zfs_bool zfs_file_rename(const char *old_filename, const char *new_filename)
 {
 	return (rename(old_filename, new_filename) == 0);
 }
 
-ZFSDEF ZFSBool zfs_file_copy(const char *source_filename, const char *destination_filename)
+ZFSDEF zfs_bool zfs_file_copy(const char *source_filename, const char *destination_filename)
 {
 	FILE *source_file = fopen(source_filename, "rb");
 	if (!source_file)
@@ -449,14 +450,14 @@ ZFSDEF ZFSBool zfs_file_copy(const char *source_filename, const char *destinatio
 	return ZFS_TRUE;
 }
 
-ZFSDEF ZFSBool zfs_file_delete(const char *filename)
+ZFSDEF zfs_bool zfs_file_delete(const char *filename)
 {
 	return (remove(filename) == 0);
 }
 #endif // Z_FS_NO_FILE
 
 #ifndef Z_FS_NO_DIRECTORY
-static inline ZFSBool zfs__skip_directory(ZFSDir *context)
+static inline zfs_bool zfs__skip_directory(ZFSDir *context)
 {
 	const char *name =
 #if defined(ZFS_POSIX)
@@ -467,7 +468,7 @@ static inline ZFSBool zfs__skip_directory(ZFSDir *context)
 	return (strcmp(name, ".") == 0 || strcmp(name, "..") == 0);
 }
 
-ZFSDEF ZFSBool zfs_directory_begin(ZFSDir *context, const char *path)
+ZFSDEF zfs_bool zfs_directory_begin(ZFSDir *context, const char *path)
 {
 #if defined(ZFS_POSIX)
 	context->handle = opendir(path);
@@ -486,7 +487,7 @@ ZFSDEF ZFSBool zfs_directory_begin(ZFSDir *context, const char *path)
 #endif
 }
 
-ZFSDEF ZFSBool zfs_directory_next(ZFSDir *context)
+ZFSDEF zfs_bool zfs_directory_next(ZFSDir *context)
 {
 #if defined(ZFS_POSIX)
 	do
@@ -545,7 +546,7 @@ ZFSDEF void zfs_directory_current_filename(ZFSDir *context, char *result, zfs_ll
 #endif
 }
 
-ZFSDEF ZFSBool zfs_directory_is_directory(ZFSDir *context)
+ZFSDEF zfs_bool zfs_directory_is_directory(ZFSDir *context)
 {
 #if defined(ZFS_POSIX)
 	#ifdef _DIRENT_HAVE_D_TYPE

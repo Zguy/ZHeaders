@@ -104,7 +104,7 @@ int main()
 		while (zfs_directory_next(&dir))
 		{
 			zfs_directory_current_filename(&dir, buffer, sizeof(buffer));
-			ZFSBool is_dir = zfs_directory_is_directory(&dir);
+			zfs_bool is_dir = zfs_directory_is_directory(&dir);
 			printf("%i\n", is_dir);
 		}
 		zfs_directory_end(&dir);
