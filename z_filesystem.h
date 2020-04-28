@@ -61,7 +61,7 @@ if (zfs_directory_begin(&dir, dir_path))
 	while (zfs_directory_next(&dir))
 	{
 		zfs_directory_current_filename(&dir, path, sizeof(path));
-		ZFSBool is_dir = zfs_directory_is_directory(&dir);
+		zfs_bool is_dir = zfs_directory_is_directory(&dir);
 	}
 	zfs_directory_end(&dir);
 }
