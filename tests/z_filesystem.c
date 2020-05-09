@@ -6,8 +6,6 @@
 //#define Z_FS_NO_DIRECTORY
 #include "z_filesystem.h"
 
-//TODO(johannes): Test robustness when buffer is too small
-
 static void assert_strcmp(const char *str1, const char *str2)
 {
 	PICOTEST_ASSERT(strcmp(str1, str2) == 0, "\"%s\" and \"%s\" do not match", str1, str2);
@@ -108,6 +106,88 @@ PICOTEST_CASE(path)
 	zfs_path_full(buffer, sizeof(buffer), "file.txt");
 	zfs_path_full(buffer, sizeof(buffer), "/usr/bin/file.txt");
 }
+
+PICOTEST_CASE(path_tiny_buffer)
+{
+	char buffer[5];
+
+	zfs_path_join(buffer, sizeof(buffer), "/usr/bin", "file");
+	assert_normalized_strcmp(buffer, "/usr");
+	zfs_path_join(buffer, sizeof(buffer), "/usr/bin/", "file");
+	assert_normalized_strcmp(buffer, "/usr");
+	zfs_path_join(buffer, sizeof(buffer), "/usr/bin/", "/file");
+	assert_normalized_strcmp(buffer, "/usr");
+	zfs_path_join(buffer, sizeof(buffer), "/usr/bin/", "");
+	assert_normalized_strcmp(buffer, "/usr");
+	zfs_path_join(buffer, sizeof(buffer), "/usr/bin", "");
+	assert_normalized_strcmp(buffer, "/usr");
+	zfs_path_join(buffer, sizeof(buffer), "", "/file");
+	assert_normalized_strcmp(buffer, "/fil");
+
+	zfs_path_extension(buffer, sizeof(buffer), "/usr/bin/file.txt");
+	assert_strcmp(buffer, ".txt");
+	zfs_path_extension(buffer, sizeof(buffer), "file.txt");
+	assert_strcmp(buffer, ".txt");
+	zfs_path_extension(buffer, sizeof(buffer), "/file");
+	assert_strcmp(buffer, "");
+	zfs_path_extension(buffer, sizeof(buffer), "file");
+	assert_strcmp(buffer, "");
+	zfs_path_extension(buffer, sizeof(buffer), "/weird.path/to/file.txt");
+	assert_strcmp(buffer, ".txt");
+	zfs_path_extension(buffer, sizeof(buffer), "/wierd.path/to/file");
+	assert_strcmp(buffer, "");
+	zfs_path_extension(buffer, sizeof(buffer), "file.with.multiple.extensions.txt");
+	assert_strcmp(buffer, ".txt");
+
+	zfs_path_set_extension(buffer, sizeof(buffer), "/usr/bin/file.txt", ".bmp");
+	assert_strcmp(buffer, "/usr");
+	zfs_path_set_extension(buffer, sizeof(buffer), "file.txt", ".bmp");
+	assert_strcmp(buffer, "file");
+	zfs_path_set_extension(buffer, sizeof(buffer), "/file", ".bmp");
+	assert_strcmp(buffer, "/fil");
+	zfs_path_set_extension(buffer, sizeof(buffer), "file", ".bmp");
+	assert_strcmp(buffer, "file");
+	zfs_path_set_extension(buffer, sizeof(buffer), "/weird.path/to/file.txt", ".bmp");
+	assert_strcmp(buffer, "/wei");
+	zfs_path_set_extension(buffer, sizeof(buffer), "/wierd.path/to/file", ".bmp");
+	assert_strcmp(buffer, "/wie");
+	zfs_path_set_extension(buffer, sizeof(buffer), "file.with.multiple.extensions.txt", ".bmp");
+	assert_strcmp(buffer, "file");
+
+	zfs_path_basename(buffer, sizeof(buffer), "/usr/bin/file");
+	assert_strcmp(buffer, "file");
+	zfs_path_basename(buffer, sizeof(buffer), "file.txt");
+	assert_strcmp(buffer, "file");
+	zfs_path_basename(buffer, sizeof(buffer), "/file.txt");
+	assert_strcmp(buffer, "file");
+
+	zfs_path_basename_without_extension(buffer, sizeof(buffer), "/usr/bin/file");
+	assert_strcmp(buffer, "file");
+	zfs_path_basename_without_extension(buffer, sizeof(buffer), "file.txt");
+	assert_strcmp(buffer, "file");
+	zfs_path_basename_without_extension(buffer, sizeof(buffer), "/file.txt");
+	assert_strcmp(buffer, "file");
+	zfs_path_basename_without_extension(buffer, sizeof(buffer), "/file");
+	assert_strcmp(buffer, "file");
+	zfs_path_basename_without_extension(buffer, sizeof(buffer), "file");
+	assert_strcmp(buffer, "file");
+	zfs_path_basename_without_extension(buffer, sizeof(buffer), "/weird.path/to/file");
+	assert_strcmp(buffer, "file");
+
+	zfs_path_directory(buffer, sizeof(buffer), "/usr/bin/file");
+	assert_normalized_strcmp(buffer, "/usr");
+	zfs_path_directory(buffer, sizeof(buffer), "file.txt");
+	assert_normalized_strcmp(buffer, "");
+	zfs_path_directory(buffer, sizeof(buffer), "/file.txt");
+	assert_normalized_strcmp(buffer, "/");
+
+	zfs_path_normalize(buffer, sizeof(buffer), "/m\\s");
+	assert_normalized_strcmp(buffer, "/m/s");
+
+	strcpy(buffer, "/m\\s");
+	zfs_path_normalize_inplace(buffer);
+	assert_normalized_strcmp(buffer, "/m/s");
+}
 #endif
 
 #ifndef Z_FS_NO_FILE
@@ -150,6 +230,7 @@ int main(void)
 	int fails = 0;
 #ifndef Z_FS_NO_PATH
 	fails += path(NULL);
+	fails += path_tiny_buffer(NULL);
 #endif
 #ifndef Z_FS_NO_FILE
 	fails += file(NULL);
