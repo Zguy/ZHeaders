@@ -55,6 +55,21 @@ PICOTEST_CASE(path)
 	zfs_path_extension(buffer, sizeof(buffer), "file.with.multiple.extensions.txt");
 	assert_strcmp(buffer, ".txt");
 
+	zfs_path_set_extension(buffer, sizeof(buffer), "/usr/bin/file.txt", ".bmp");
+	assert_strcmp(buffer, "/usr/bin/file.bmp");
+	zfs_path_set_extension(buffer, sizeof(buffer), "file.txt", ".bmp");
+	assert_strcmp(buffer, "file.bmp");
+	zfs_path_set_extension(buffer, sizeof(buffer), "/file", ".bmp");
+	assert_strcmp(buffer, "/file.bmp");
+	zfs_path_set_extension(buffer, sizeof(buffer), "file", ".bmp");
+	assert_strcmp(buffer, "file.bmp");
+	zfs_path_set_extension(buffer, sizeof(buffer), "/weird.path/to/file.txt", ".bmp");
+	assert_strcmp(buffer, "/weird.path/to/file.bmp");
+	zfs_path_set_extension(buffer, sizeof(buffer), "/wierd.path/to/file", ".bmp");
+	assert_strcmp(buffer, "/wierd.path/to/file.bmp");
+	zfs_path_set_extension(buffer, sizeof(buffer), "file.with.multiple.extensions.txt", ".bmp");
+	assert_strcmp(buffer, "file.with.multiple.extensions.bmp");
+
 	zfs_path_basename(buffer, sizeof(buffer), "/usr/bin/file");
 	assert_strcmp(buffer, "file");
 	zfs_path_basename(buffer, sizeof(buffer), "file.txt");

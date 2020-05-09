@@ -105,6 +105,9 @@ extern "C" {
 	// Returns the extension of a file including the period (".txt").
 	ZFSDEF void zfs_path_extension(char *result, zfs_ll result_size, const char *path);
 
+	// Returns the path as-is, but with a replaced extension
+	ZFSDEF void zfs_path_set_extension(char *result, zfs_ll result_size, const char *path, const char *new_extension);
+
 	// Returns the file part of a path, given "/path/to/file.txt" it returns "file.txt".
 	ZFSDEF void zfs_path_basename(char *result, zfs_ll result_size, const char *path);
 
@@ -284,6 +287,26 @@ ZFSPATHDEF void zfs_path_extension(char *result, zfs_ll result_size, const char 
 		len = result_size - 1;
 	memcpy(result, path + ext_index, len);
 	result[len] = '\0';
+}
+
+ZFSPATHDEF void zfs_path_set_extension(char *result, zfs_ll result_size, const char *path, const char *new_extension)
+{
+	zfs_ll len = strlen(path);
+	zfs_ll dir_sep_index = zfs__find_last_dir_sep(path, len) + 1;
+	zfs_ll ext_index = zfs__find_last_char(path, len, '.');
+	if (ext_index < dir_sep_index)
+		ext_index = len;
+
+	if (ext_index >= result_size)
+		ext_index = result_size - 1;
+	memcpy(result, path, ext_index);
+
+	zfs_ll ext_len = strlen(new_extension);
+	if (ext_index + ext_len >= result_size)
+		ext_len = result_size - ext_index;
+	memcpy(result + ext_index, new_extension, ext_len);
+
+	result[ext_index + ext_len] = '\0';
 }
 
 ZFSPATHDEF void zfs_path_basename(char *result, zfs_ll result_size, const char *path)
