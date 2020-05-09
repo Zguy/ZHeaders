@@ -26,3 +26,28 @@ void logFailure(const char *file, int line, const char *type, const char *test, 
 
 	printf("\n");
 }
+
+/* Hooks */
+PicoTestCaseEnterProc logEnter;
+PicoTestCaseLeaveProc logLeave;
+#undef PICOTEST_CASE_ENTER
+#undef PICOTEST_CASE_LEAVE
+#define PICOTEST_CASE_ENTER logEnter
+#define PICOTEST_CASE_LEAVE logLeave
+
+int level = 0;
+void indent(int level) {
+	while (level--) printf("  ");
+}
+void logEnter(const char *name) {
+	indent(level++);
+	printf("begin %s\n", name);
+}
+void logLeave(const char *name, int fail) {
+	level--;
+	if (!fail)
+	{
+		indent(level);
+		printf("end %s\n", name);
+	}
+}
