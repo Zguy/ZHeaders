@@ -52,6 +52,8 @@ PICOTEST_CASE(path)
 	assert_strcmp(buffer, ".txt");
 	zfs_path_extension(buffer, sizeof(buffer), "/wierd.path/to/file");
 	assert_strcmp(buffer, "");
+	zfs_path_extension(buffer, sizeof(buffer), "file.with.multiple.extensions.txt");
+	assert_strcmp(buffer, ".txt");
 
 	zfs_path_basename(buffer, sizeof(buffer), "/usr/bin/file");
 	assert_strcmp(buffer, "file");
