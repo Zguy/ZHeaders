@@ -303,7 +303,7 @@ ZFSPATHDEF void zfs_path_set_extension(char *result, zfs_ll result_size, const c
 
 	zfs_ll ext_len = strlen(new_extension);
 	if (ext_index + ext_len >= result_size)
-		ext_len = result_size - ext_index;
+		ext_len = result_size - ext_index - 1;
 	memcpy(result + ext_index, new_extension, ext_len);
 
 	result[ext_index + ext_len] = '\0';
