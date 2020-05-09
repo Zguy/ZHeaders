@@ -1,16 +1,16 @@
+#include "picotest_logger.h"
+
 #define Z_FS_IMPLEMENTATION
 //#define Z_FS_NO_PATH
 //#define Z_FS_NO_FILE
 //#define Z_FS_NO_DIRECTORY
 #include "z_filesystem.h"
 
-#include <assert.h>
-
 //TODO(johannes): Test robustness when buffer is too small
 
 static void assert_strcmp(const char *str1, const char *str2)
 {
-	assert(strcmp(str1, str2) == 0);
+	PICOTEST_ASSERT(strcmp(str1, str2) == 0, "\"%s\" and \"%s\" do not match", str1, str2);
 }
 
 #ifndef Z_FS_NO_PATH
@@ -20,15 +20,13 @@ static void assert_normalized_strcmp(const char *str1, const char *str2)
 	char str2_norm[50];
 	zfs_path_normalize(str1_norm, sizeof(str1_norm), str1);
 	zfs_path_normalize(str2_norm, sizeof(str2_norm), str2);
-	assert(strcmp(str1_norm, str2_norm) == 0);
+	PICOTEST_ASSERT(strcmp(str1_norm, str2_norm) == 0, "\"%s\" and \"%s\" do not match", str1_norm, str2_norm);
 }
-#endif
 
-int main(void)
+PICOTEST_CASE(path)
 {
 	char buffer[50];
 
-#ifndef Z_FS_NO_PATH
 	zfs_path_join(buffer, sizeof(buffer), "/usr/bin", "file");
 	assert_normalized_strcmp(buffer, "/usr/bin/file");
 	zfs_path_join(buffer, sizeof(buffer), "/usr/bin/", "file");
@@ -79,25 +77,33 @@ int main(void)
 	zfs_path_normalize_inplace(buffer);
 	assert_normalized_strcmp(buffer, "/mixed/separators/here/");
 
-	assert(zfs_path_working_directory(buffer, sizeof(buffer)) == ZFS_TRUE);
+	PICOTEST_ASSERT(zfs_path_working_directory(buffer, sizeof(buffer)) == ZFS_TRUE);
 	zfs_path_full(buffer, sizeof(buffer), "file.txt");
 	zfs_path_full(buffer, sizeof(buffer), "/usr/bin/file.txt");
+}
 #endif
 
 #ifndef Z_FS_NO_FILE
-	assert(zfs_file_touch("test.txt") == ZFS_TRUE);
-	assert(zfs_file_exists("test.txt") == ZFS_TRUE);
-	assert(zfs_file_rename("test.txt", "test2.txt") == ZFS_TRUE);
-	assert(zfs_file_touch("test2.txt") == ZFS_TRUE);
-	assert(zfs_file_exists("test2.txt") == ZFS_TRUE);
-	assert(zfs_file_copy("test2.txt", "test.txt") == ZFS_TRUE);
-	assert(zfs_file_delete("test.txt") == ZFS_TRUE);
-	assert(zfs_file_exists("test.txt") == ZFS_FALSE);
-	assert(zfs_file_delete("test2.txt") == ZFS_TRUE);
-	assert(zfs_file_exists("test2.txt") == ZFS_FALSE);
+PICOTEST_CASE(file)
+{
+	PICOTEST_ASSERT(zfs_file_touch("test.txt") == ZFS_TRUE);
+	PICOTEST_ASSERT(zfs_file_exists("test.txt") == ZFS_TRUE);
+	PICOTEST_ASSERT(zfs_file_rename("test.txt", "test2.txt") == ZFS_TRUE);
+	PICOTEST_ASSERT(zfs_file_touch("test2.txt") == ZFS_TRUE);
+	PICOTEST_ASSERT(zfs_file_exists("test2.txt") == ZFS_TRUE);
+	PICOTEST_ASSERT(zfs_file_copy("test2.txt", "test.txt") == ZFS_TRUE);
+	PICOTEST_ASSERT(zfs_file_delete("test.txt") == ZFS_TRUE);
+	PICOTEST_ASSERT(zfs_file_exists("test.txt") == ZFS_FALSE);
+	PICOTEST_ASSERT(zfs_file_delete("test2.txt") == ZFS_TRUE);
+	PICOTEST_ASSERT(zfs_file_exists("test2.txt") == ZFS_FALSE);
+}
 #endif
 
 #ifndef Z_FS_NO_DIRECTORY
+PICOTEST_CASE(directory)
+{
+	char buffer[50];
+
 	ZFSDir dir;
 	if (zfs_directory_begin(&dir, "../tests"))
 	{
@@ -109,6 +115,20 @@ int main(void)
 		}
 		zfs_directory_end(&dir);
 	}
+}
 #endif
-	return 0;
+
+int main(void)
+{
+	int fails = 0;
+#ifndef Z_FS_NO_PATH
+	fails += path(NULL);
+#endif
+#ifndef Z_FS_NO_FILE
+	fails += file(NULL);
+#endif
+#ifndef Z_FS_NO_DIRECTORY
+	fails += directory(NULL);
+#endif
+	return fails;
 }
