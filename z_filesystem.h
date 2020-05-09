@@ -274,16 +274,15 @@ ZFSPATHDEF void zfs_path_join(char *result, zfs_ll result_size, const char *left
 ZFSPATHDEF void zfs_path_extension(char *result, zfs_ll result_size, const char *path)
 {
 	zfs_ll len = strlen(path);
-	zfs_ll offset = zfs__find_last_char(path, len, '.');
+	zfs_ll dir_sep_index = zfs__find_last_dir_sep(path, len) + 1;
+	zfs_ll ext_index = zfs__find_last_char(path, len, '.');
+	if (ext_index < dir_sep_index)
+		ext_index = len;
 
-	if (offset < 0)
-		len = 0;
-	else
-		len -= offset;
-
+	len -= ext_index;
 	if (len >= result_size)
 		len = result_size - 1;
-	memcpy(result, path + offset, len);
+	memcpy(result, path + ext_index, len);
 	result[len] = '\0';
 }
 

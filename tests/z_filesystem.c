@@ -46,6 +46,12 @@ PICOTEST_CASE(path)
 	assert_strcmp(buffer, ".txt");
 	zfs_path_extension(buffer, sizeof(buffer), "/file");
 	assert_strcmp(buffer, "");
+	zfs_path_extension(buffer, sizeof(buffer), "file");
+	assert_strcmp(buffer, "");
+	zfs_path_extension(buffer, sizeof(buffer), "/weird.path/to/file.txt");
+	assert_strcmp(buffer, ".txt");
+	zfs_path_extension(buffer, sizeof(buffer), "/wierd.path/to/file");
+	assert_strcmp(buffer, "");
 
 	zfs_path_basename(buffer, sizeof(buffer), "/usr/bin/file");
 	assert_strcmp(buffer, "file");
@@ -59,6 +65,10 @@ PICOTEST_CASE(path)
 	zfs_path_basename_without_extension(buffer, sizeof(buffer), "file.txt");
 	assert_strcmp(buffer, "file");
 	zfs_path_basename_without_extension(buffer, sizeof(buffer), "/file.txt");
+	assert_strcmp(buffer, "file");
+	zfs_path_basename_without_extension(buffer, sizeof(buffer), "/file");
+	assert_strcmp(buffer, "file");
+	zfs_path_basename_without_extension(buffer, sizeof(buffer), "file");
 	assert_strcmp(buffer, "file");
 	zfs_path_basename_without_extension(buffer, sizeof(buffer), "/weird.path/to/file");
 	assert_strcmp(buffer, "file");
