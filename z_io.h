@@ -60,7 +60,7 @@ extern "C" {
 #endif
 
 typedef long long zio_ll;
-typedef int zio_error;
+typedef int zio_result;
 
 typedef enum
 {
@@ -85,7 +85,7 @@ typedef struct ZIOHandle ZIOHandle;
 
 struct ZIOHandle
 {
-	zio_error (*close)(ZIOHandle *handle);
+	zio_result (*close)(ZIOHandle *handle);
 	zio_ll (*size)(ZIOHandle *handle);
 	zio_ll (*seek)(ZIOHandle *handle, zio_ll offset, ZIOSeek whence);
 	zio_ll (*read)(ZIOHandle *handle, void *destination, zio_ll size);
@@ -109,11 +109,11 @@ struct ZIOHandle
 };
 
 // 'handle' can be either malloc'ed or simply created on the stack
-ZIODEF zio_error zio_open_file(ZIOHandle *handle, const char *filename, ZIOMode mode);
-ZIODEF zio_error zio_open_memory(ZIOHandle *handle, void *memory, zio_ll size);
-ZIODEF zio_error zio_open_const_memory(ZIOHandle *handle, const void *memory, zio_ll size);
+ZIODEF zio_result zio_open_file(ZIOHandle *handle, const char *filename, ZIOMode mode);
+ZIODEF zio_result zio_open_memory(ZIOHandle *handle, void *memory, zio_ll size);
+ZIODEF zio_result zio_open_const_memory(ZIOHandle *handle, const void *memory, zio_ll size);
 
-static inline zio_error zio_close(ZIOHandle *handle) { return handle->close(handle); }
+static inline zio_result zio_close(ZIOHandle *handle) { return handle->close(handle); }
 
 // Returns size of data, or ZIO_ERROR
 static inline zio_ll zio_size(ZIOHandle *handle) { return handle->size(handle); }
@@ -154,14 +154,14 @@ static inline int zio__test_flag(int flags, int test)
 	return ((flags & test) == test);
 }
 
-static inline zio_error zio__set_error(ZIOHandle *handle, const char *error_string)
+static inline zio_result zio__set_error(ZIOHandle *handle, const char *error_string)
 {
 	handle->last_error = error_string;
 	return ZIO_ERROR;
 }
 
 // File I/O
-static zio_error zio__file_close(ZIOHandle *handle)
+static zio_result zio__file_close(ZIOHandle *handle)
 {
 	if (fclose(handle->data.file.handle) != 0)
 		return zio__set_error(handle, strerror(errno));
@@ -199,7 +199,7 @@ static zio_ll zio__file_write(ZIOHandle *handle, const void *source, zio_ll size
 }
 
 // Memory I/O
-static zio_error zio__memory_close(ZIOHandle *handle)
+static zio_result zio__memory_close(ZIOHandle *handle)
 {
 	zio__zero_handle(handle);
 	return ZIO_OK;
@@ -269,7 +269,7 @@ static zio_ll zio__const_memory_write(ZIOHandle *handle, const void *source, zio
 	return zio__set_error(handle, "Cannot write to const memory");
 }
 
-ZIODEF zio_error zio_open_file(ZIOHandle *handle, const char *filename, ZIOMode mode)
+ZIODEF zio_result zio_open_file(ZIOHandle *handle, const char *filename, ZIOMode mode)
 {
 	char mode_flags[7];
 
@@ -302,7 +302,7 @@ ZIODEF zio_error zio_open_file(ZIOHandle *handle, const char *filename, ZIOMode 
 	return ZIO_OK;
 }
 
-ZIODEF zio_error zio_open_memory(ZIOHandle *handle, void *memory, zio_ll size)
+ZIODEF zio_result zio_open_memory(ZIOHandle *handle, void *memory, zio_ll size)
 {
 	zio__zero_handle(handle);
 
@@ -321,7 +321,7 @@ ZIODEF zio_error zio_open_memory(ZIOHandle *handle, void *memory, zio_ll size)
 	return ZIO_OK;
 }
 
-ZIODEF zio_error zio_open_const_memory(ZIOHandle *handle, const void *memory, zio_ll size)
+ZIODEF zio_result zio_open_const_memory(ZIOHandle *handle, const void *memory, zio_ll size)
 {
 	zio__zero_handle(handle);
 
