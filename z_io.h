@@ -163,7 +163,7 @@ static inline zio_result zio__set_error(ZIOHandle *handle, const char *error_str
 // File I/O
 static zio_result zio__file_close(ZIOHandle *handle)
 {
-	if (fclose(handle->data.file.handle) != 0)
+	if (fclose((FILE*)handle->data.file.handle) != 0)
 		return zio__set_error(handle, strerror(errno));
 	zio__zero_handle(handle);
 	return ZIO_OK;
@@ -179,21 +179,21 @@ static zio_ll zio__file_size(ZIOHandle *handle)
 }
 static zio_ll zio__file_seek(ZIOHandle *handle, zio_ll offset, ZIOSeek whence)
 {
-	if (fseek(handle->data.file.handle, offset, whence) != 0)
+	if (fseek((FILE*)handle->data.file.handle, offset, whence) != 0)
 		return zio__set_error(handle, strerror(errno));
-	return ftell(handle->data.file.handle);
+	return ftell((FILE*)handle->data.file.handle);
 }
 static zio_ll zio__file_read(ZIOHandle *handle, void *destination, zio_ll size)
 {
-	zio_ll read_count = fread(destination, size, 1, handle->data.file.handle);
-	if (read_count == 0 && ferror(handle->data.file.handle))
+	zio_ll read_count = fread(destination, size, 1, (FILE*)handle->data.file.handle);
+	if (read_count == 0 && ferror((FILE*)handle->data.file.handle))
 		return zio__set_error(handle, strerror(errno));
 	return read_count * size;
 }
 static zio_ll zio__file_write(ZIOHandle *handle, const void *source, zio_ll size)
 {
-	zio_ll write_count = fwrite(source, size, 1, handle->data.file.handle);
-	if (write_count == 0 && ferror(handle->data.file.handle))
+	zio_ll write_count = fwrite(source, size, 1, (FILE*)handle->data.file.handle);
+	if (write_count == 0 && ferror((FILE*)handle->data.file.handle))
 		return zio__set_error(handle, strerror(errno));;
 	return write_count * size;
 }
