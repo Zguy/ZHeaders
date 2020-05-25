@@ -179,7 +179,7 @@ static zio_ll zio__file_size(ZIOHandle *handle)
 }
 static zio_ll zio__file_seek(ZIOHandle *handle, zio_ll offset, ZIOSeek whence)
 {
-	if (fseek((FILE*)handle->data.file.handle, offset, whence) != 0)
+	if (fseek((FILE*)handle->data.file.handle, (long)offset, whence) != 0)
 		return zio__set_error(handle, strerror(errno));
 	return ftell((FILE*)handle->data.file.handle);
 }
