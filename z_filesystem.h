@@ -516,7 +516,7 @@ ZFSDEF zfs_bool zfs_directory_next(ZFSDir *context)
 #if defined(ZFS_POSIX)
 	do
 	{
-		context->data = readdir(context->handle);
+		context->data = readdir((DIR*)context->handle);
 		if (!context->data)
 			return ZFS_FALSE;
 	} while (zfs__skip_directory(context));
@@ -534,7 +534,7 @@ ZFSDEF zfs_bool zfs_directory_next(ZFSDir *context)
 ZFSDEF void zfs_directory_end(ZFSDir *context)
 {
 #if defined(ZFS_POSIX)
-	closedir(context->handle);
+	closedir((DIR*)context->handle);
 	context->handle = NULL;
 	context->data = NULL;
 #elif defined(ZFS_WINDOWS)
