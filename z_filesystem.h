@@ -254,9 +254,12 @@ ZFSPATHDEF void zfs_path_join(char *result, zfs_ll result_size, const char *left
 	zfs_ll left_len = strlen(left);
 	zfs_ll right_len = strlen(right);
 
-	if (left_len >= result_size)
-		left_len = result_size - 1;
-	memcpy(result, left, left_len);
+	if (result != left)
+	{
+		if (left_len >= result_size)
+			left_len = result_size - 1;
+		memcpy(result, left, left_len);
+	}
 
 	if (left_len + 1 < result_size && left_len > 0 && !zfs__is_dir_sep(result[left_len - 1]))
 		result[left_len++] = ZFS__DIR_SEP;
@@ -297,9 +300,12 @@ ZFSPATHDEF void zfs_path_set_extension(char *result, zfs_ll result_size, const c
 	if (ext_index < dir_sep_index)
 		ext_index = len;
 
-	if (ext_index >= result_size)
-		ext_index = result_size - 1;
-	memcpy(result, path, ext_index);
+	if (result != path)
+	{
+		if (ext_index >= result_size)
+			ext_index = result_size - 1;
+		memcpy(result, path, ext_index);
+	}
 
 	zfs_ll ext_len = strlen(new_extension);
 	if (ext_index + ext_len >= result_size)

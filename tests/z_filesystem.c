@@ -188,6 +188,18 @@ PICOTEST_CASE(path_tiny_buffer)
 	zfs_path_normalize_inplace(buffer);
 	assert_normalized_strcmp(buffer, "/m/s");
 }
+
+PICOTEST_CASE(path_buffer_left)
+{
+	char buffer[50];
+
+	strcpy(buffer, "/root");
+	zfs_path_join(buffer, sizeof(buffer), buffer, "another/path");
+	assert_normalized_strcmp(buffer, "/root/another/path");
+
+	zfs_path_set_extension(buffer, sizeof(buffer), buffer, ".bmp");
+	assert_normalized_strcmp(buffer, "/root/another/path.bmp");
+}
 #endif
 
 #ifndef Z_FS_NO_FILE
@@ -231,6 +243,7 @@ int main(void)
 #ifndef Z_FS_NO_PATH
 	fails += path(NULL);
 	fails += path_tiny_buffer(NULL);
+	fails += path_buffer_left(NULL);
 #endif
 #ifndef Z_FS_NO_FILE
 	fails += file(NULL);
