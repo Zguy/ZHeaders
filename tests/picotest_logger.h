@@ -35,19 +35,19 @@ PicoTestCaseLeaveProc logLeave;
 #define PICOTEST_CASE_ENTER logEnter
 #define PICOTEST_CASE_LEAVE logLeave
 
-int level = 0;
+int g_level = 0;
 void indent(int level) {
 	while (level--) printf("  ");
 }
 void logEnter(const char *name) {
-	indent(level++);
+	indent(g_level++);
 	printf("begin %s\n", name);
 }
 void logLeave(const char *name, int fail) {
-	level--;
+	g_level--;
 	if (!fail)
 	{
-		indent(level);
+		indent(g_level);
 		printf("end %s\n", name);
 	}
 }
