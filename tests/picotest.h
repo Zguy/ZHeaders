@@ -75,10 +75,10 @@
  * \{
  */
 
-#define PICOTEST_VERSION "1.3.0"
+#define PICOTEST_VERSION "1.4.1"
 #define PICOTEST_VERSION_MAJOR 1
-#define PICOTEST_VERSION_MINOR 3
-#define PICOTEST_VERSION_PATCH 0
+#define PICOTEST_VERSION_MINOR 4
+#define PICOTEST_VERSION_PATCH 1
 
 /*! \} End of Version */
 
@@ -125,8 +125,8 @@ typedef struct PicoTestMetadata {
  * @see PICOTEST_METADATA
  */
 #define PICOTEST_EXTERN(_testName)                                             \
-    PicoTestProc _testName;                                                    \
-    PicoTestMetadata _PICOTEST_METADATA(_testName);
+    extern PicoTestProc _testName;                                             \
+    extern PicoTestMetadata _PICOTEST_METADATA(_testName);
 
 /**
  * Get test metadata.
@@ -150,7 +150,7 @@ typedef struct PicoTestMetadata {
         __LINE__,                                                              \
         _testName,                                                             \
         _nbSubtests,                                                           \
-        _subtests};
+        (const struct PicoTestMetadata **)_subtests};
 /*! \endcond */
 
 /*! \} End of Test Functions */
@@ -547,7 +547,7 @@ static void _picoTest_logFailure(const char *file, int line, const char *type,
     }
 
 #define _PICOTEST_CASE_RUNNER_BEGIN(_testName)                                 \
-    static int _testName##_testCaseRunner(void) {                                  \
+    static int _testName##_testCaseRunner() {                                  \
         int abort;                                                             \
         jmp_buf failureEnv;                                                    \
         jmp_buf *oldEnv = _picoTest_failureEnv;                                \
@@ -1384,7 +1384,7 @@ typedef void(PicoTestFixtureAfterTeardownProc)(const char *fixtureName,
  *      @example_file{mainSuite.inc}
  */
 #define PICOTEST_SUITE(_suiteName, ...)                                        \
-    _PICOTEST_FOR_EACH(_PICOTEST_SUITE_DECLARE_SUBTEST, __VA_ARGS__)           \
+    _PICOTEST_FOR_EACH(PICOTEST_EXTERN, __VA_ARGS__)                           \
     static PicoTestMetadata *_suiteName##_subtests[] = {_PICOTEST_FOR_EACH(    \
         _PICOTEST_SUITE_ENUMERATE_SUBTEST, __VA_ARGS__) NULL};                 \
     _PICOTEST_TEST_DECLARE(_suiteName, _PICOTEST_ARGCOUNT(__VA_ARGS__),        \
@@ -1434,8 +1434,6 @@ typedef void(PicoTestFixtureAfterTeardownProc)(const char *fixtureName,
     }
 
 /*! \cond IGNORE */
-#define _PICOTEST_SUITE_DECLARE_SUBTEST(_testName)                             \
-    PicoTestMetadata _PICOTEST_METADATA(_testName);
 #define _PICOTEST_SUITE_ENUMERATE_SUBTEST(_testName)                           \
     PICOTEST_METADATA(_testName),
 /*! \endcond */
