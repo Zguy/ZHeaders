@@ -58,11 +58,11 @@ zfs_path_directory(dir_path, sizeof(dir_path), path);
 ZFSDir dir;
 if (zfs_directory_begin(&dir, dir_path))
 {
-	while (zfs_directory_next(&dir))
+	do
 	{
 		zfs_directory_current_filename(&dir, path, sizeof(path));
 		zfs_bool is_dir = zfs_directory_is_directory(&dir);
-	}
+	} while (zfs_directory_next(&dir));
 	zfs_directory_end(&dir);
 }
 #endif
@@ -505,6 +505,13 @@ ZFSDEF zfs_bool zfs_directory_begin(ZFSDir *context, const char *path)
 	context->data = NULL;
 	if (!context->handle)
 		return ZFS_FALSE;
+
+	if (!zfs_directory_next(context))
+	{
+		zfs_directory_end(context);
+		return ZFS_FALSE;
+	}
+
 	return ZFS_TRUE;
 #elif defined(ZFS_WINDOWS)
 	char new_path[MAX_PATH];
@@ -513,6 +520,16 @@ ZFSDEF zfs_bool zfs_directory_begin(ZFSDir *context, const char *path)
 	context->handle = FindFirstFileA(new_path, (LPWIN32_FIND_DATAA)&context->data);
 	if (context->handle == INVALID_HANDLE_VALUE)
 		return ZFS_FALSE;
+
+	while (zfs__skip_directory(context))
+	{
+		if (!FindNextFileA(context->handle, (LPWIN32_FIND_DATAA)&context->data))
+		{
+			zfs_directory_end(context);
+			return ZFS_FALSE;
+		}
+	}
+
 	return ZFS_TRUE;
 #endif
 }
