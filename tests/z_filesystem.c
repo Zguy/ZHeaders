@@ -221,16 +221,14 @@ PICOTEST_CASE(file)
 #ifndef Z_FS_NO_DIRECTORY
 PICOTEST_CASE(directory)
 {
-	char buffer[50];
-
 	ZFSDir dir;
 	if (zfs_directory_begin(&dir, "tests"))
 	{
 		do
 		{
-			zfs_directory_current_filename(&dir, buffer, sizeof(buffer));
+			const char *filename = zfs_directory_current_filename(&dir);
 			zfs_bool is_dir = zfs_directory_is_directory(&dir);
-			printf("%s = %i\n", buffer, is_dir);
+			printf("%s = %i\n", filename, is_dir);
 		} while (zfs_directory_next(&dir));
 		zfs_directory_end(&dir);
 	}

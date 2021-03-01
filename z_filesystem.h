@@ -60,7 +60,7 @@ if (zfs_directory_begin(&dir, dir_path))
 {
 	do
 	{
-		zfs_directory_current_filename(&dir, path, sizeof(path));
+		const char *filename = zfs_directory_current_filename(&dir);
 		zfs_bool is_dir = zfs_directory_is_directory(&dir);
 	} while (zfs_directory_next(&dir));
 	zfs_directory_end(&dir);
@@ -181,7 +181,10 @@ extern "C" {
 	ZFSDEF void zfs_directory_end(ZFSDir *context);
 
 	// Returns the filename of the file or directory the context currently points at.
-	ZFSDEF void zfs_directory_current_filename(ZFSDir *context, char *result, zfs_ll result_size);
+	// The char pointer is only valid until the next call to zfs_directory_next() or zfs_directory_end().
+	// May crash if called after zfs_directory_begin() or zfs_directory_next() returns false, or after
+	// calling zfs_directory_end().
+	ZFSDEF const char *zfs_directory_current_filename(ZFSDir *context);
 
 	// Returns whether the context currently points at a directory.
 	ZFSDEF zfs_bool zfs_directory_is_directory(ZFSDir *context);
@@ -567,29 +570,14 @@ ZFSDEF void zfs_directory_end(ZFSDir *context)
 #endif
 }
 
-ZFSDEF void zfs_directory_current_filename(ZFSDir *context, char *result, zfs_ll result_size)
+ZFSDEF const char *zfs_directory_current_filename(ZFSDir *context)
 {
 #if defined(ZFS_POSIX)
-	if (context->data)
-	{
-		const char *name = ((struct dirent*)context->data)->d_name;
-		zfs_ll name_size = strlen(name);
-		if (name_size >= result_size)
-			name_size = result_size - 1;
-		memcpy(result, name, name_size);
-		result[name_size] = '\0';
-	}
-	else if (result_size > 0)
-	{
-		result[0] = '\0';
-	}
+	const char *name = ((struct dirent*)context->data)->d_name;
+	return name;
 #elif defined(ZFS_WINDOWS)
 	const char *name = ((LPWIN32_FIND_DATAA)context->data)->cFileName;
-	zfs_ll name_size = strlen(name);
-	if (name_size >= result_size)
-		name_size = result_size - 1;
-	memcpy(result, name, name_size);
-	result[name_size] = '\0';
+	return name;
 #endif
 }
 
