@@ -111,7 +111,7 @@ extern "C" {
 	// Returns the file part of a path, given "/path/to/file.txt" it returns "file.txt".
 	ZFSDEF void zfs_path_basename(char *result, zfs_ll result_size, const char *path);
 
-	// Returns the same as above, but without the extension, given "/path/to/file.txt" it returns "file".
+	// Returns the file part of a path without the extension, given "/path/to/file.txt" it returns "file".
 	ZFSDEF void zfs_path_basename_without_extension(char *result, zfs_ll result_size, const char *path);
 
 	// Returns the directory part of a path including a trailing /, given "/path/to/file.txt" it returns "/path/to/".
@@ -120,7 +120,7 @@ extern "C" {
 	// Replaces all directory separators with the native separator. \ on Windows, / on Linux.
 	ZFSDEF void zfs_path_normalize_inplace(char *path);
 
-	// Same as above, but on a copy of the string.
+	// Replaces all directory separators with the native separator. \ on Windows, / on Linux. Operates on a copy of the string.
 	ZFSDEF void zfs_path_normalize(char *result, zfs_ll result_size, const char *path);
 
 	// Sets 'result' buffer to the current working directory.
