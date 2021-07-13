@@ -22,6 +22,9 @@ to disable file functions.
 #define Z_FS_NO_DIRECTORY
 to disable directory traversal functions.
 
+#define Z_FS_ALWAYS_FORWARD_SLASH
+to always use / as the directory separator, even on Windows.
+
 UNLICENSE
 This is free and unencumbered software released into the public domain.
 Anyone is free to copy, modify, publish, use, compile, sell, or
@@ -227,7 +230,7 @@ extern "C" {
 #define ZFSPATHDEF ZFSDEF
 #endif
 
-#if defined(ZFS_POSIX)
+#if defined(ZFS_POSIX) || defined(Z_FS_ALWAYS_FORWARD_SLASH)
 static const char ZFS__DIR_SEP = '/';
 #elif defined(ZFS_WINDOWS)
 static const char ZFS__DIR_SEP = '\\';

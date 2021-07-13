@@ -4,6 +4,7 @@
 //#define Z_FS_NO_PATH
 //#define Z_FS_NO_FILE
 //#define Z_FS_NO_DIRECTORY
+//#define Z_FS_ALWAYS_FORWARD_SLASH
 #include "z_filesystem.h"
 
 static void assert_strcmp(const char *str1, const char *str2)
