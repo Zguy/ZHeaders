@@ -470,7 +470,7 @@ ZFSDEF zfs_bool zfs_file_copy(const char *source_filename, const char *destinati
 
 	char buffer[32768]; // 32k
 
-	zfs_ll n;
+	size_t n;
 	while ((n = fread(buffer, 1, sizeof(buffer), source_file)) > 0)
 	{
 		if (fwrite(buffer, 1, n, destination_file) != n)
