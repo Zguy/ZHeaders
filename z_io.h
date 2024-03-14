@@ -132,6 +132,28 @@ static inline zio_ll zio_write(ZIOHandle *handle, const void *source, zio_ll siz
 
 static inline const char *zio_last_error(ZIOHandle *handle) { return handle->last_error; }
 
+#define ZIO_TYPES(ZIO_FN_DECL) \
+	ZIO_FN_DECL(i8, signed char) \
+	ZIO_FN_DECL(u8, unsigned char) \
+	ZIO_FN_DECL(i16, short) \
+	ZIO_FN_DECL(u16, unsigned short) \
+	ZIO_FN_DECL(i32, int) \
+	ZIO_FN_DECL(u32, unsigned int) \
+	ZIO_FN_DECL(i64, long long) \
+	ZIO_FN_DECL(u64, unsigned long long) \
+	ZIO_FN_DECL(f32, float) \
+	ZIO_FN_DECL(f64, double)
+
+#define ZIO_READ_FN(suffix, type) static inline type zio_read_##suffix(ZIOHandle *handle) { type value; handle->read(handle, &value, sizeof(value)); return value; }
+#define ZIO_WRITE_FN(suffix, type) static inline void zio_write_##suffix(ZIOHandle *handle, type value) { handle->write(handle, &value, sizeof(value)); }
+
+ZIO_TYPES(ZIO_READ_FN)
+ZIO_TYPES(ZIO_WRITE_FN)
+
+#undef ZIO_TYPES
+#undef ZIO_READ_FN
+#undef ZIO_WRITE_FN
+
 #ifdef __cplusplus
 }
 #endif
