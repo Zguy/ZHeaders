@@ -495,12 +495,7 @@ ZFSDEF zfs_bool zfs_file_delete(const char *filename)
 #ifndef Z_FS_NO_DIRECTORY
 static inline zfs_bool zfs__skip_directory(ZFSDir *context)
 {
-	const char *name =
-#if defined(ZFS_POSIX)
-		((struct dirent*)context->data)->d_name;
-#elif defined(ZFS_WINDOWS)
-		((LPWIN32_FIND_DATAA)context->data)->cFileName;
-#endif
+	const char *name = zfs_directory_current_filename(context);
 	return (strcmp(name, ".") == 0 || strcmp(name, "..") == 0);
 }
 
@@ -576,11 +571,9 @@ ZFSDEF void zfs_directory_end(ZFSDir *context)
 ZFSDEF const char *zfs_directory_current_filename(ZFSDir *context)
 {
 #if defined(ZFS_POSIX)
-	const char *name = ((struct dirent*)context->data)->d_name;
-	return name;
+	return ((struct dirent*)context->data)->d_name;
 #elif defined(ZFS_WINDOWS)
-	const char *name = ((LPWIN32_FIND_DATAA)context->data)->cFileName;
-	return name;
+	return ((LPWIN32_FIND_DATAA)context->data)->cFileName;
 #endif
 }
 
