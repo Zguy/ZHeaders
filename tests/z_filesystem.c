@@ -39,6 +39,21 @@ PICOTEST_CASE(path)
 	zfs_path_join(buffer, sizeof(buffer), "", "/file");
 	assert_normalized_strcmp(buffer, "/file");
 
+	zfs_path_without_extension(buffer, sizeof(buffer), "/usr/bin/file.txt");
+	assert_strcmp(buffer, "/usr/bin/file");
+	zfs_path_without_extension(buffer, sizeof(buffer), "file.txt");
+	assert_strcmp(buffer, "file");
+	zfs_path_without_extension(buffer, sizeof(buffer), "/file");
+	assert_strcmp(buffer, "/file");
+	zfs_path_without_extension(buffer, sizeof(buffer), "file");
+	assert_strcmp(buffer, "file");
+	zfs_path_without_extension(buffer, sizeof(buffer), "/weird.path/to/file.txt");
+	assert_strcmp(buffer, "/weird.path/to/file");
+	zfs_path_without_extension(buffer, sizeof(buffer), "/wierd.path/to/file");
+	assert_strcmp(buffer, "/wierd.path/to/file");
+	zfs_path_without_extension(buffer, sizeof(buffer), "file.with.multiple.extensions.txt");
+	assert_strcmp(buffer, "file.with.multiple.extensions");
+
 	zfs_path_extension(buffer, sizeof(buffer), "/usr/bin/file.txt");
 	assert_strcmp(buffer, ".txt");
 	zfs_path_extension(buffer, sizeof(buffer), "file.txt");
@@ -124,6 +139,21 @@ PICOTEST_CASE(path_tiny_buffer)
 	assert_normalized_strcmp(buffer, "/usr");
 	zfs_path_join(buffer, sizeof(buffer), "", "/file");
 	assert_normalized_strcmp(buffer, "/fil");
+
+	zfs_path_without_extension(buffer, sizeof(buffer), "/usr/bin/file.txt");
+	assert_strcmp(buffer, "/usr");
+	zfs_path_without_extension(buffer, sizeof(buffer), "file.txt");
+	assert_strcmp(buffer, "file");
+	zfs_path_without_extension(buffer, sizeof(buffer), "/file");
+	assert_strcmp(buffer, "/fil");
+	zfs_path_without_extension(buffer, sizeof(buffer), "file");
+	assert_strcmp(buffer, "file");
+	zfs_path_without_extension(buffer, sizeof(buffer), "/weird.path/to/file.txt");
+	assert_strcmp(buffer, "/wei");
+	zfs_path_without_extension(buffer, sizeof(buffer), "/wierd.path/to/file");
+	assert_strcmp(buffer, "/wie");
+	zfs_path_without_extension(buffer, sizeof(buffer), "file.with.multiple.extensions.txt");
+	assert_strcmp(buffer, "file");
 
 	zfs_path_extension(buffer, sizeof(buffer), "/usr/bin/file.txt");
 	assert_strcmp(buffer, ".txt");

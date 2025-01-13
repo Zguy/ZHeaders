@@ -105,6 +105,9 @@ extern "C" {
 	// Joins two paths.
 	ZFSDEF void zfs_path_join(char *result, zfs_ll result_size, const char *left, const char *right);
 
+	// Returns the path without the extension, given "/path/to/file.txt" it returns "/path/to/file".
+	ZFSDEF void zfs_path_without_extension(char *result, zfs_ll result_size, const char *path);
+
 	// Returns the extension of a file including the period (".txt").
 	ZFSDEF void zfs_path_extension(char *result, zfs_ll result_size, const char *path);
 
@@ -281,6 +284,21 @@ ZFSPATHDEF void zfs_path_join(char *result, zfs_ll result_size, const char *left
 	memcpy(result + left_len, right, right_len);
 
 	result[left_len + right_len] = '\0';
+}
+
+ZFSPATHDEF void zfs_path_without_extension(char *result, zfs_ll result_size, const char *path)
+{
+	zfs_ll len = strlen(path);
+	zfs_ll dir_sep_index = zfs__find_last_dir_sep(path, len) + 1;
+	zfs_ll ext_index = zfs__find_last_char(path, len, '.');
+	if (ext_index < dir_sep_index)
+		ext_index = len;
+
+	len = ext_index;
+	if (len >= result_size)
+		len = result_size - 1;
+	memcpy(result, path, len);
+	result[len] = '\0';
 }
 
 ZFSPATHDEF void zfs_path_extension(char *result, zfs_ll result_size, const char *path)
